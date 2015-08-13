@@ -1,0 +1,19 @@
+<configuration>
+	<appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+		<layout class="ch.qos.logback.classic.PatternLayout">
+			<pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n
+			</pattern>
+		</layout>
+	</appender>
+
+	<logger name="org.springframework.batch" level="INFO" />
+
+	<logger name="org.springframework.integration" level="INFO" />
+
+	<logger name="org.springframework.batch.integration.chunk" level="INFO" />
+
+
+	<root level="DEBUG">
+		<appender-ref ref="STDOUT" />
+	</root>
+</configuration>

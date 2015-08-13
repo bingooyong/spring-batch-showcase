@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:batch="http://www.springframework.org/schema/batch"
+       xmlns:jdbc="http://www.springframework.org/schema/jdbc"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd
+                http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context.xsd
+                http://www.springframework.org/schema/batch http://www.springframework.org/schema/batch/spring-batch.xsd
+                http://www.springframework.org/schema/jdbc http://www.springframework.org/schema/jdbc/spring-jdbc.xsd">
+
+
+    <context:annotation-config />
+
+    <!-- Component scan to find all Spring components -->
+    <context:component-scan base-package="com.geekcap.javaworld.springbatchexample" />
+
+
+    <!-- Data source - connect to a MySQL instance running on the local machine -->
+    <bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="com.mysql.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql://localhost/spring_batch_example"/>
+        <property name="username" value="sbe"/>
+        <property name="password" value="sbe"/>
+    </bean>
+
+    <bean id="transactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+
+    <bean id="jdbcTemplate" class="org.springframework.jdbc.core.JdbcTemplate">
+        <property name="dataSource" ref="dataSource" />
+    </bean>
+
+    <!-- create job-meta tables automatically -->
+    <!--
+    <jdbc:initialize-database data-source="dataSource">
+        <jdbc:script location="org/springframework/batch/core/schema-drop-mysql.sql" />
+        <jdbc:script location="org/springframework/batch/core/schema-mysql.sql" />
+    </jdbc:initialize-database>
+    -->
+
+
+
+    <!-- Job Repository: used to persist the state of the batch job -->
+    <bean id="jobRepository" class="org.springframework.batch.core.repository.support.MapJobRepositoryFactoryBean">
+        <property name="transactionManager" ref="transactionManager" />
+    </bean>
+
+
+
+    <!-- Job Launcher: creates the job and the job state before launching it -->
+    <bean id="jobLauncher" class="org.springframework.batch.core.launch.support.SimpleJobLauncher">
+        <property name="jobRepository" ref="jobRepository" />
+    </bean>
+
+
+
+
+    <!-- Reader bean for our simple CSV example -->
+    <bean id="productReader" class="org.springframework.batch.item.file.FlatFileItemReader" scope="step">
+
+        <!-- <property name="resource" value="file:./sample.csv" /> -->
+        <property name="resource" value="file:#{jobParameters['inputFile']}" />
+
+
+        <!-- Skip the first line of the file because this is the header that defines the fields -->
+        <property name="linesToSkip" value="1" />
+
+        <!-- Defines how we map lines to objects -->
+        <property name="lineMapper">
+            <bean class="org.springframework.batch.item.file.mapping.DefaultLineMapper">
+
+                <!-- The lineTokenizer divides individual lines up into units of work -->
+                <property name="lineTokenizer">
+                    <bean class="org.springframework.batch.item.file.transform.DelimitedLineTokenizer">
+
+                        <!-- Names of the CSV columns -->
+                        <property name="names" value="id,name,description,quantity" />
+                    </bean>
+                </property>
+
+                <!-- The fieldSetMapper maps a line in the file to a Product object -->
+                <property name="fieldSetMapper">
+                    <bean class="com.geekcap.javaworld.springbatchexample.simple.reader.ProductFieldSetMapper" />
+                </property>
+            </bean>
+        </property>
+    </bean>
+
+    <bean id="productWriter" class="com.geekcap.javaworld.springbatchexample.simple.writer.ProductItemWriter" />
+
+    <bean id="productProcessor" class="com.geekcap.javaworld.springbatchexample.simple.processor.ProductItemProcessor" />
+
+    <bean id="archiveFileTasklet" class="com.geekcap.javaworld.springbatchexample.simple.tasklet.ArchiveProductImportFileTasklet" scope="step">
+        <property name="inputFile" value="#{jobParameters['inputFile']}" />
+    </bean>
+
+</beans>
