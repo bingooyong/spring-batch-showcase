@@ -10,7 +10,7 @@
 
 	<properties>
 		<jdk.version>1.6</jdk.version>
-		<spring.version>3.2.2.RELEASE</spring.version>
+		<spring.version>5.2.22.RELEASE</spring.version>
 		<spring.batch.version>2.2.0.RELEASE</spring.batch.version>
 		<spring.data.version>1.2.1.RELEASE</spring.data.version>
 		<mongodb.driver.version>2.11.2</mongodb.driver.version>
